@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Liken — AI cold email copilot for LinkedIn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0a0a0a;
+      --bg-card: #111111;
+      --bg-card-hover: #161616;
+      --border: rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.13);
+      --purple: #7C3AED;
+      --purple-light: #8B5CF6;
+      --purple-dim: rgba(124,58,237,0.15);
+      --white: #ffffff;
+      --gray-1: #e5e7eb;
+      --gray-2: #9ca3af;
+      --gray-3: #6b7280;
+      --gray-4: #374151;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--white);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── Utilities ── */
+    .container {
+      width: 100%;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .section-label {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--purple-light);
+      margin-bottom: 16px;
+    }
+
+    /* ── Fade-in on scroll ── */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .fade-in-delay-1 { transition-delay: 0.1s; }
+    .fade-in-delay-2 { transition-delay: 0.2s; }
+    .fade-in-delay-3 { transition-delay: 0.3s; }
+
+    /* ── Nav ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10,10,10,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+    }
+
+    .nav-logo {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.02em;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .nav-logo .logo-mark {
+      color: var(--purple-light);
+      font-size: 18px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      background: var(--purple);
+      color: var(--white);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s, transform 0.1s;
+      letter-spacing: -0.01em;
+    }
+
+    .btn-primary:hover {
+      background: var(--purple-light);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    /* ── Hero ── */
+    .hero {
+      padding: 100px 0 80px;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 13px;
+      background: var(--purple-dim);
+      border: 1px solid rgba(124,58,237,0.3);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--purple-light);
+      margin-bottom: 28px;
+    }
+
+    .hero-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--purple-light);
+      border-radius: 50%;
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .hero h1 {
+      font-size: clamp(36px, 6vw, 64px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      color: var(--white);
+      margin-bottom: 20px;
+      max-width: 720px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .hero h1 span {
+      background: linear-gradient(135deg, #a78bfa, #7C3AED);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: clamp(16px, 2vw, 19px);
+      color: var(--gray-2);
+      max-width: 540px;
+      margin: 0 auto 36px;
+      line-height: 1.6;
+    }
+
+    .hero-cta-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .hero-cta-group .btn-primary {
+      font-size: 16px;
+      padding: 13px 28px;
+      border-radius: 10px;
+    }
+
+    .hero-fine-print {
+      font-size: 13px;
+      color: var(--gray-3);
+    }
+
+    .hero-fine-print span {
+      color: var(--gray-2);
+    }
+
+    /* ── Video placeholder ── */
+    .video-section {
+      padding: 0 0 100px;
+    }
+
+    .video-wrapper {
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+      aspect-ratio: 16 / 9;
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      cursor: pointer;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .video-wrapper::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 50%, rgba(124,58,237,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .video-wrapper:hover {
+      border-color: rgba(124,58,237,0.35);
+    }
+
+    .play-btn {
+      width: 56px;
+      height: 56px;
+      background: rgba(124,58,237,0.2);
+      border: 1px solid rgba(124,58,237,0.4);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .video-wrapper:hover .play-btn {
+      background: rgba(124,58,237,0.35);
+      transform: scale(1.08);
+    }
+
+    .play-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: var(--purple-light);
+      margin-left: 3px;
+    }
+
+    .video-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gray-2);
+      letter-spacing: -0.01em;
+    }
+
+    /* <!-- LOOM EMBED: replace the .video-wrapper contents with your Loom iframe here --> */
+
+    /* ── Problem section ── */
+    .problem-section {
+      padding: 100px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .section-header {
+      margin-bottom: 56px;
+    }
+
+    .section-header h2 {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      color: var(--white);
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .card:hover {
+      border-color: var(--border-strong);
+      background: var(--bg-card-hover);
+    }
+
+    .card-icon {
+      font-size: 22px;
+      margin-bottom: 14px;
+      display: block;
+      line-height: 1;
+    }
+
+    .card h3 {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--white);
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .card p {
+      font-size: 14px;
+      color: var(--gray-2);
+      line-height: 1.6;
+    }
+
+    /* ── How it works ── */
+    .how-section {
+      padding: 100px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      position: relative;
+    }
+
+    .steps-grid::before {
+      content: '';
+      position: absolute;
+      top: 28px;
+      left: calc(16.67% + 16px);
+      right: calc(16.67% + 16px);
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
+      pointer-events: none;
+    }
+
+    .step {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      position: relative;
+    }
+
+    .step-number {
+      width: 32px;
+      height: 32px;
+      background: var(--purple-dim);
+      border: 1px solid rgba(124,58,237,0.3);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--purple-light);
+      margin-bottom: 18px;
+      letter-spacing: -0.01em;
+    }
+
+    .step h3 {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--white);
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .step p {
+      font-size: 14px;
+      color: var(--gray-2);
+      line-height: 1.6;
+    }
+
+    /* ── Waitlist form ── */
+    .waitlist-section {
+      padding: 100px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .waitlist-card {
+      max-width: 480px;
+      margin: 0 auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      border-radius: 16px;
+      padding: 44px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .waitlist-card::before {
+      content: '';
+      position: absolute;
+      top: -80px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 300px;
+      height: 200px;
+      background: radial-gradient(ellipse, rgba(124,58,237,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .waitlist-card h2 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--white);
+      margin-bottom: 8px;
+    }
+
+    .waitlist-card .waitlist-sub {
+      font-size: 15px;
+      color: var(--gray-2);
+      margin-bottom: 28px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .input-row input[type="email"] {
+      flex: 1;
+      padding: 11px 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      color: var(--white);
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s;
+      min-width: 0;
+    }
+
+    .input-row input[type="email"]::placeholder {
+      color: var(--gray-3);
+    }
+
+    .input-row input[type="email"]:focus {
+      border-color: var(--purple);
+    }
+
+    .input-row .btn-primary {
+      white-space: nowrap;
+      flex-shrink: 0;
+      padding: 11px 18px;
+    }
+
+    .waitlist-select {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--gray-2);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+
+    .waitlist-select:focus {
+      border-color: var(--border-strong);
+    }
+
+    .waitlist-select option {
+      background: #1a1a1a;
+      color: var(--white);
+    }
+
+    .waitlist-success {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 0;
+    }
+
+    .success-icon {
+      width: 44px;
+      height: 44px;
+      background: rgba(5,150,105,0.15);
+      border: 1px solid rgba(5,150,105,0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .waitlist-success h3 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--white);
+    }
+
+    .waitlist-success p {
+      font-size: 14px;
+      color: var(--gray-2);
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 0;
+      text-align: center;
+    }
+
+    .footer-text {
+      font-size: 13px;
+      color: var(--gray-3);
+      letter-spacing: -0.01em;
+    }
+
+    .footer-text .logo-mark {
+      color: var(--purple-light);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .hero {
+        padding: 72px 0 64px;
+      }
+
+      .cards-grid,
+      .steps-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .steps-grid::before {
+        display: none;
+      }
+
+      .input-row {
+        flex-direction: column;
+      }
+
+      .input-row .btn-primary {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .waitlist-card {
+        padding: 32px 24px;
+      }
+
+      .problem-section,
+      .how-section,
+      .waitlist-section {
+        padding: 72px 0;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero h1 {
+        font-size: 32px;
+      }
+
+      .video-label {
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Nav ── -->
+  <nav>
+    <div class="container">
+      <div class="nav-inner">
+        <a href="#" class="nav-logo">
+          <span class="logo-mark">✦</span>
+          Liken
+        </a>
+        <a href="#waitlist" class="btn-primary">Join waitlist</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Hero ── -->
+  <section class="hero">
+    <div class="container">
+      <div class="fade-in">
+        <div class="hero-badge">Now in private beta</div>
+      </div>
+      <div class="fade-in fade-in-delay-1">
+        <h1>Cold outreach that actually <span>gets replies.</span></h1>
+      </div>
+      <div class="fade-in fade-in-delay-2">
+        <p class="hero-sub">
+          Liken scores any LinkedIn profile against your background and goals,
+          then writes a personalized email in seconds.
+        </p>
+      </div>
+      <div class="fade-in fade-in-delay-3">
+        <div class="hero-cta-group">
+          <a href="#waitlist" class="btn-primary">Join the waitlist →</a>
+          <p class="hero-fine-print"><span>Free during beta</span> · Chrome extension</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Video placeholder ── -->
+  <section class="video-section">
+    <div class="container">
+      <div class="fade-in">
+        <div class="video-wrapper">
+          <!-- LOOM EMBED: replace the contents of this div with your Loom iframe, e.g.:
+               <iframe src="https://www.loom.com/embed/YOUR_VIDEO_ID" frameborder="0"
+                 webkitallowfullscreen mozallowfullscreen allowfullscreen
+                 style="position:absolute;top:0;left:0;width:100%;height:100%;">
+               </iframe>
+               Then set position:relative on .video-wrapper and remove flex/align styles.
+          -->
+          <div class="play-btn">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          </div>
+          <span class="video-label">See it in action</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Problem ── -->
+  <section class="problem-section">
+    <div class="container">
+      <div class="fade-in section-header">
+        <span class="section-label">The Problem</span>
+        <h2>Cold outreach is broken.</h2>
+      </div>
+      <div class="cards-grid">
+        <div class="card fade-in fade-in-delay-1">
+          <span class="card-icon">🎯</span>
+          <h3>You don't know who's worth it</h3>
+          <p>You spend 20 minutes reading a profile only to realize there's no real connection worth reaching out over.</p>
+        </div>
+        <div class="card fade-in fade-in-delay-2">
+          <span class="card-icon">📄</span>
+          <h3>Generic emails get ignored</h3>
+          <p>People can smell a template from the first line. If it doesn't feel personal, it goes straight to the archive.</p>
+        </div>
+        <div class="card fade-in fade-in-delay-3">
+          <span class="card-icon">⏱</span>
+          <h3>Writing well takes forever</h3>
+          <p>A genuinely good cold email takes 30+ minutes done right — research, drafting, and editing included.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── How it works ── -->
+  <section class="how-section">
+    <div class="container">
+      <div class="fade-in section-header">
+        <span class="section-label">How It Works</span>
+        <h2>From profile to sent email in under a minute.</h2>
+      </div>
+      <div class="steps-grid">
+        <div class="step fade-in fade-in-delay-1">
+          <div class="step-number">1</div>
+          <h3>See your match score</h3>
+          <p>Open any LinkedIn profile and Liken instantly scores how relevant that person is to your specific goal — with reasons why.</p>
+        </div>
+        <div class="step fade-in fade-in-delay-2">
+          <div class="step-number">2</div>
+          <h3>Get a personalized email</h3>
+          <p>If the match is worth it, one click generates a tailored cold email grounded in both their background and yours.</p>
+        </div>
+        <div class="step fade-in fade-in-delay-3">
+          <div class="step-number">3</div>
+          <h3>Send it your way</h3>
+          <p>Review it in Gmail, copy it to any email client, or tweak the draft before you send. You stay in control.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Waitlist ── -->
+  <section class="waitlist-section" id="waitlist">
+    <div class="container">
+      <div class="waitlist-card fade-in">
+
+        <div id="waitlist-form-wrap">
+          <h2>Be the first to use it.</h2>
+          <p class="waitlist-sub">Join the waitlist for early access.</p>
+
+          <!--
+            FORM ENDPOINT: replace the action URL below with your Formspree or Tally endpoint.
+            Formspree:  action="https://formspree.io/f/YOUR_FORM_ID"
+            Tally:      action="https://tally.so/r/YOUR_FORM_ID" (use Tally's embed JS instead)
+          -->
+          <form
+            id="waitlist-form"
+            action="https://formspree.io/f/YOUR_FORM_ID"
+            method="POST"
+          >
+            <div class="input-row">
+              <input
+                type="email"
+                name="email"
+                placeholder="you@example.com"
+                required
+                autocomplete="email"
+              />
+              <button type="submit" class="btn-primary">Get early access</button>
+            </div>
+            <select name="role" class="waitlist-select">
+              <option value="" disabled selected>I'm a…</option>
+              <option value="student">College student</option>
+              <option value="recent-grad">Recent grad</option>
+              <option value="career-switcher">Career switcher</option>
+              <option value="other">Other</option>
+            </select>
+          </form>
+        </div>
+
+        <div id="waitlist-success" class="waitlist-success">
+          <div class="success-icon">✓</div>
+          <h3>You're on the list!</h3>
+          <p>We'll be in touch soon.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Footer ── -->
+  <footer>
+    <div class="container">
+      <p class="footer-text">
+        <span class="logo-mark">✦</span>
+        Liken · Built for people who take networking seriously
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // ── Scroll fade-in ──
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12 }
+    );
+
+    document.querySelectorAll('.fade-in').forEach((el) => observer.observe(el));
+
+    // ── Waitlist form submit ──
+    const form = document.getElementById('waitlist-form');
+    const formWrap = document.getElementById('waitlist-form-wrap');
+    const successEl = document.getElementById('waitlist-success');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = new FormData(form);
+
+      try {
+        const res = await fetch(form.action, {
+          method: 'POST',
+          body: data,
+          headers: { 'Accept': 'application/json' }
+        });
+
+        if (res.ok) {
+          formWrap.style.display = 'none';
+          successEl.style.display = 'flex';
+        } else {
+          // Fallback: show success anyway for demo purposes
+          formWrap.style.display = 'none';
+          successEl.style.display = 'flex';
+        }
+      } catch {
+        // Offline / no endpoint configured — show success for demo
+        formWrap.style.display = 'none';
+        successEl.style.display = 'flex';
+      }
+    });
+  </script>
+
+</body>
+</html>
